@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ProviderList from './components/ProviderList';
 import ChannelList from './components/ChannelList';
 import PlayerView from './components/PlayerView';
+import Skeleton from './components/Skeleton';
 import './App.css';
 
 const API_BASE = 'http://localhost:3001/api';
@@ -92,26 +93,32 @@ function App() {
 
   return (
     <div className="app">
+      <div className="aurora-bg">
+        <div className="aurora-blob blob-1"></div>
+        <div className="aurora-blob blob-2"></div>
+        <div className="aurora-blob blob-3"></div>
+      </div>
+      
       <header className="app-header">
         <div className="header-left">
           {view !== 'providers' && (
-            <button className="back-btn" onClick={handleBack}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <button className="back-btn" onClick={handleBack} aria-label="Go back">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
             </button>
           )}
-          <div className="logo">
-            <span className="logo-icon">📺</span>
-            <h1>CricfyTV</h1>
+          <div className="logo animate-fade-in">
+            <span className="logo-icon">📡</span>
+            <h1 className="premium-font">CRICFY<span style={{ color: 'var(--accent)', marginLeft: '2px' }}>TV</span></h1>
           </div>
         </div>
         <div className="header-right">
-          <span className="badge">
-            {view === 'providers' ? `${providers.length} Providers` :
-              view === 'channels' ? `${channels.length} Channels` :
-                'Now Playing'}
-          </span>
+          <div className="badge glass-premium ripple">
+            {view === 'providers' ? 'Discovery' :
+              view === 'channels' ? 'Live Channels' :
+                'Cinema Mode'}
+          </div>
         </div>
       </header>
 
@@ -124,12 +131,21 @@ function App() {
           </div>
         )}
 
-        {loading && view !== 'player' ? (
-          <div className="loading">
-            <div className="spinner"></div>
-            <p>Loading...</p>
+        {loading && view === 'providers' && (
+          <div className="animate-fade-in">
+            <h2 className="section-title">Providers</h2>
+            <Skeleton type="card" count={8} />
           </div>
-        ) : (
+        )}
+
+        {loading && view === 'channels' && (
+          <div className="animate-fade-in">
+            <h2 className="section-title">{selectedProviderTitle} Channels</h2>
+            <Skeleton type="row" count={10} />
+          </div>
+        )}
+
+        {!loading && (
           <>
             {view === 'providers' && (
               <ProviderList providers={providers} onSelect={handleProviderClick} />
@@ -141,10 +157,11 @@ function App() {
                 onSelect={handleChannelClick}
               />
             )}
-            {view === 'player' && selectedChannel && (
-              <PlayerView channel={selectedChannel} />
-            )}
           </>
+        )}
+        
+        {view === 'player' && selectedChannel && (
+          <PlayerView channel={selectedChannel} />
         )}
       </main>
     </div>

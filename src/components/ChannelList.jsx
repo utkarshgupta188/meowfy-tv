@@ -25,8 +25,8 @@ export default function ChannelList({ channels, providerTitle, onSelect }) {
       <h2 className="section-title">{providerTitle} Channels</h2>
 
       <div className="filters">
-        <div className="search-box">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="search-box glass-premium">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
@@ -39,7 +39,7 @@ export default function ChannelList({ channels, providerTitle, onSelect }) {
         </div>
         {groups.length > 2 && (
           <select
-            className="group-select"
+            className="group-select glass-premium"
             value={groupFilter}
             onChange={(e) => setGroupFilter(e.target.value)}
           >
@@ -52,36 +52,53 @@ export default function ChannelList({ channels, providerTitle, onSelect }) {
         )}
       </div>
 
-      <div className="grid channels-grid">
+      <div className="grid channels-grid animated-grid">
         {filtered.map((ch, i) => (
           <div
             key={i}
-            className={`card channel-card ${ch.isDrm ? 'drm' : ''}`}
+            className={`card channel-card glass-premium magnetic-card animate-fade-in ${ch.isDrm ? 'drm-exclusive' : ''}`}
             onClick={() => onSelect(ch)}
+            style={{ animationDelay: `${i * 0.05}s` }}
           >
-            <div className="channel-info">
+            <div className="card-top">
               {ch.tvgLogo ? (
-                <img
-                  className="channel-logo"
-                  src={ch.tvgLogo}
-                  alt={ch.title}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
+                <div className="logo-wrapper">
+                  <img
+                    className="channel-logo"
+                    src={ch.tvgLogo}
+                    alt={ch.title}
+                    onError={(e) => {
+                      e.target.parentElement.classList.add('logo-error');
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="channel-logo-placeholder">
                   <span>{ch.title.charAt(0)}</span>
                 </div>
               )}
-              <div>
-                <h3>{ch.title}</h3>
-                {ch.groupTitle && <span className="tag">{ch.groupTitle}</span>}
+              <div className="channel-indicators">
+                {ch.isDrm && <span className="badge-exclusive">DRM</span>}
+                <span className="badge-live">LIVE</span>
               </div>
             </div>
-            <div className="channel-badges">
-              {ch.isDrm && <span className="badge badge-drm">DRM</span>}
-              <span className="badge badge-play">▶ Play</span>
+            
+            <div className="card-body">
+              <h3>{ch.title}</h3>
+              {ch.groupTitle && (
+                <span className="category-tag">
+                  {ch.groupTitle}
+                </span>
+              )}
+            </div>
+
+            <div className="card-action">
+              <span className="play-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                Watch Now
+              </span>
             </div>
           </div>
         ))}

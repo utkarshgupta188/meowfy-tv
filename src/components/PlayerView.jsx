@@ -21,6 +21,7 @@ function buildProxyUrl(originalUrl, channel) {
 export default function PlayerView({ channel }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
+  const wrapperRef = useRef(null);
   const playerRef = useRef(null);
   const uiRef = useRef(null);
   const [playerError, setPlayerError] = useState(null);
@@ -58,8 +59,8 @@ export default function PlayerView({ channel }) {
         await player.attach(video);
         playerRef.current = player;
 
-        // Set up the UI overlay
-        const ui = new shaka.ui.Overlay(player, containerRef.current, video);
+        // Set up the UI overlay on the wrapper specifically to keep controls contained
+        const ui = new shaka.ui.Overlay(player, wrapperRef.current, video);
         uiRef.current = ui;
         ui.configure({
           controlPanelElements: [
@@ -208,71 +209,84 @@ export default function PlayerView({ channel }) {
   }, [channel]);
 
   return (
-    <div className="player-view">
-      <div className="player-info">
-        <h2>{channel.title}</h2>
-        <div className="player-meta">
-          {channel.groupTitle && <span className="tag">{channel.groupTitle}</span>}
-          {channel.isDrm && <span className="badge badge-drm">ClearKey DRM</span>}
+    <div className="player-view animate-fade-in">
+      <div className="player-header">
+        <div className="player-title-section">
+          <h2 className="premium-font">{channel.title}</h2>
+          <div className="player-meta-tags">
+            {channel.groupTitle && <span className="category-tag glass-premium">{channel.groupTitle}</span>}
+            {channel.isDrm && <span className="badge-exclusive glass-premium">SECURE DRM</span>}
+            <span className="badge-live-pulse glass-premium">
+              <span className="pulse-dot"></span>
+              LIVE STREAM
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="player-container" ref={containerRef}>
-        {isLoading && (
-          <div className="player-loading">
-            <div className="spinner"></div>
-            <p>Loading stream...</p>
-          </div>
-        )}
-        {playerError && (
-          <div className="player-error">
-            <span>❌</span>
-            <p>{playerError}</p>
-            <button
-              className="retry-btn"
-              onClick={() => {
-                setPlayerError(null);
-                setIsLoading(true);
-                window.location.reload();
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        )}
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          style={{ width: '100%', height: '100%' }}
-        />
+      <div className="player-main-container" ref={containerRef}>
+        <div className="player-atmosphere"></div>
+        <div className="player-wrapper glass-premium" ref={wrapperRef}>
+          {isLoading && (
+            <div className="player-overlay loading-overlay">
+              <div className="spinner"></div>
+              <p>Initializing Secure Stream...</p>
+            </div>
+          )}
+          {playerError && (
+            <div className="player-overlay error-overlay">
+              <span className="error-icon">⚠️</span>
+              <h3>Playback Error</h3>
+              <p>{playerError}</p>
+              <button
+                className="btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="video-element"
+          />
+        </div>
       </div>
 
-      <div className="player-details">
-        <h4>Stream Details</h4>
-        <div className="detail-grid">
-          <div className="detail-item">
-            <span className="detail-label">URL</span>
-            <span className="detail-value">{truncateUrl(channel.url)}</span>
+      <div className="player-details-section grid">
+        <div className="details-card glass-premium">
+          <div className="card-header">
+            <h4 className="premium-font">Technical Metadata</h4>
+            <span className="status-dot online"></span>
           </div>
-          {channel.referer && (
-            <div className="detail-item">
-              <span className="detail-label">Referer</span>
-              <span className="detail-value">{channel.referer}</span>
+          <div className="metadata-grid">
+            <div className="meta-item">
+              <span className="meta-label">Source URL</span>
+              <span className="meta-value" title={channel.url}>{truncateUrl(channel.url)}</span>
             </div>
-          )}
-          {channel.isDrm && (
-            <div className="detail-item">
-              <span className="detail-label">DRM</span>
-              <span className="detail-value">ClearKey</span>
+            {channel.referer && (
+              <div className="meta-item">
+                <span className="meta-label">Referer Header</span>
+                <span className="meta-value">{channel.referer}</span>
+              </div>
+            )}
+            <div className="meta-item">
+              <span className="meta-label">Protection</span>
+              <span className="meta-value">{channel.isDrm ? 'ClearKey AES-128' : 'None (Unencrypted)'}</span>
             </div>
-          )}
-          {channel.licenseString && (
-            <div className="detail-item">
-              <span className="detail-label">License</span>
-              <span className="detail-value">{truncateUrl(channel.licenseString)}</span>
+            {channel.licenseString && (
+              <div className="meta-item">
+                <span className="meta-label">KID:KEY Mapping</span>
+                <span className="meta-value">{truncateUrl(channel.licenseString)}</span>
+              </div>
+            )}
+            <div className="meta-item">
+              <span className="meta-label">Player Engine</span>
+              <span className="meta-value">Shaka v4.3.0</span>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
