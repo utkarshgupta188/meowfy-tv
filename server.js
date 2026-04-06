@@ -124,7 +124,7 @@ function parseM3U(content) {
         const data = JSON.parse(line.replace('#EXTHTTP:', ''));
         if (data.cookie) bufCookie = data.cookie;
         if (data['user-agent']) bufUserAgent = data['user-agent'];
-      } catch {}
+      } catch { }
     } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
       bufLicenseString = line.split('=').slice(1).join('=');
     } else if (!line.startsWith('#')) {
@@ -267,7 +267,7 @@ app.get('/api/proxy', async (req, res) => {
     if (userAgent) headers['User-Agent'] = userAgent;
     if (cookie) headers['Cookie'] = cookie;
     if (referer) {
-      try { headers['Origin'] = new URL(referer).origin; } catch {}
+      try { headers['Origin'] = new URL(referer).origin; } catch { }
     }
     // Forward any extra headers from the M3U metadata
     for (const [k, v] of Object.entries(extraHeaders)) {

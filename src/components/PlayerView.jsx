@@ -77,6 +77,11 @@ export default function PlayerView({ channel }) {
 
         player.addEventListener('error', (event) => {
           console.error('Shaka player error:', event.detail);
+          // Only show overlay for critical errors
+          if (event.detail && event.detail.severity !== shaka.util.Error.Severity.CRITICAL) {
+            console.warn('Ignored non-critical Shaka error:', event.detail.code);
+            return;
+          }
           if (!destroyed) {
             setPlayerError(`Player Error ${event.detail.code}: ${event.detail.message || 'Unknown error'}`);
           }
