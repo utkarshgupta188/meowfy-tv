@@ -28,6 +28,8 @@ jobs:
       # This runs `vite build && electron-builder` based on package.json
       - name: Build Web App and Package Electron
         run: npm run electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Upload the installers and portable executables to the tag/release
       - name: Upload Release Assets
