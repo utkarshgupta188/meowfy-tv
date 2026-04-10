@@ -16,6 +16,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProviderTitle, setSelectedProviderTitle] = useState('');
+  const [channelFilter, setChannelFilter] = useState('');
+  const [channelGroup, setChannelGroup] = useState('all');
 
   useEffect(() => {
     fetchConfig();
@@ -65,6 +67,8 @@ function App() {
       const data = await res.json();
       if (Array.isArray(data)) {
         setChannels(data);
+        setChannelFilter('');
+        setChannelGroup('all');
         setView('channels');
       } else {
         setError('No channels found');
@@ -87,6 +91,8 @@ function App() {
       setView('channels');
     } else if (view === 'channels') {
       setChannels([]);
+      setChannelFilter('');
+      setChannelGroup('all');
       setView('providers');
     }
   }
@@ -155,6 +161,10 @@ function App() {
                 channels={channels}
                 providerTitle={selectedProviderTitle}
                 onSelect={handleChannelClick}
+                filter={channelFilter}
+                setFilter={setChannelFilter}
+                groupFilter={channelGroup}
+                setGroupFilter={setChannelGroup}
               />
             )}
           </>

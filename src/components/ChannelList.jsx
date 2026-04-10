@@ -3,9 +3,15 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 const INITIAL_BATCH = 60;
 const BATCH_SIZE = 40;
 
-export default function ChannelList({ channels, providerTitle, onSelect }) {
-  const [filter, setFilter] = useState('');
-  const [groupFilter, setGroupFilter] = useState('all');
+export default function ChannelList({ 
+  channels, 
+  providerTitle, 
+  onSelect,
+  filter,
+  setFilter,
+  groupFilter,
+  setGroupFilter
+}) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH);
   const observerTarget = useRef(null);
 
