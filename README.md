@@ -1,9 +1,9 @@
-# 🚀 CricfyTV Web Premium 2.0
+# 🚀 CricfyTV Web Premium v3.0
 
 A high-fidelity, cinematic web interface for live TV streaming, meticulously crafted for a premium user experience and seamless cross-platform performance.
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.0-blueviolet?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-3.0.0-blueviolet?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/UI-Cinematic_Glass-blue?style=for-the-badge" alt="UI Theme">
   <img src="https://img.shields.io/badge/Stack-Vite_%2B_React_%2B_Express-green?style=for-the-badge" alt="Tech Stack">
   <img src="https://img.shields.io/badge/Platform-Windows_%2B_Web-orange?style=for-the-badge" alt="Platform">
@@ -34,7 +34,7 @@ Every component is built using our custom **Glassmorphism 2.0** engine:
 You can now download the standalone desktop version of CricfyTV for the best experience:
 
 1. Go to the [**GitHub Releases**](https://github.com/utkarshgupta188/cricfy-web/releases) page.
-2. Download the `CricfyTV-Setup-2.0.0.exe` installer.
+2. Download the `CricfyTV-Setup-3.0.0.exe` installer.
 3. Install and enjoy live TV with zero browser clutter.
 
 ---

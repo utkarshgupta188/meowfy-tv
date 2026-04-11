@@ -164,7 +164,7 @@ function App() {
       <footer style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', zIndex: 10, position: 'relative' }}>
         <p>Premium High-Fidelity IPTV Experience</p>
         <p style={{ marginTop: '8px' }}>
-          v2.0 • Made by Utkarsh Gupta • <a href="https://github.com/utkarshgupta188" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '600' }}>@utkarshgupta188</a>
+          v3.0 • Made by Utkarsh Gupta • <a href="https://github.com/utkarshgupta188" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '600' }}>@utkarshgupta188</a>
         </p>
       </footer>
     </div>
