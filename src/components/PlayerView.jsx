@@ -45,6 +45,44 @@ export default function PlayerView({ channel }) {
   const [isLoading, setIsLoading] = useState(true);
   const [engineName, setEngineName] = useState('');
 
+  // Handle global hotkeys for Play/Pause and Fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      // Toggle Play/Pause using Spacebar
+      if (e.code === 'Space' || key === ' ') {
+        e.preventDefault();
+        const video = videoRef.current;
+        if (video) {
+          if (video.paused) video.play().catch(() => {});
+          else video.pause();
+        }
+      } 
+      // Toggle Fullscreen using 'F' key
+      else if (key === 'f') {
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          const wrapper = wrapperRef.current;
+          if (wrapper) {
+            if (wrapper.requestFullscreen) wrapper.requestFullscreen().catch(() => {});
+            else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     shaka.polyfill.installAll();
 
@@ -153,7 +191,7 @@ export default function PlayerView({ channel }) {
             ref={videoRef}
             autoPlay
             playsInline
-            controls
+            controls={engineName === 'HLS.js'}
             className="video-element"
             style={{ objectFit: 'fill', width: '100%', height: '100%' }}
           />
