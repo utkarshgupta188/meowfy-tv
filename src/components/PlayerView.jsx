@@ -23,10 +23,18 @@ function buildProxyUrl(originalUrl, channel) {
  * - Hls.js: for non-DRM HLS (.m3u8) streams — much better MPEG-TS transmuxing
  * - Shaka: for DASH (.mpd), DRM-protected, or non-HLS streams
  */
-function selectEngine(channel) {
+function selectEngine(channel, providerTitle) {
   const url = (channel.url || '').toLowerCase();
+  const title = (channel.title || '').toLowerCase();
+  const provider = (providerTitle || '').toLowerCase();
   const isHls = url.includes('.m3u8');
   const isDrm = !!channel.isDrm;
+
+  if (provider.includes('kids')) {
+    if (!title.includes('hungama') && !title.includes('disney')) {
+      return 'shaka';
+    }
+  }
 
   if (isHls && !isDrm && Hls.isSupported()) {
     return 'hlsjs';
@@ -34,7 +42,7 @@ function selectEngine(channel) {
   return 'shaka';
 }
 
-export default function PlayerView({ channel }) {
+export default function PlayerView({ channel, providerTitle }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
@@ -109,7 +117,7 @@ export default function PlayerView({ channel }) {
       if (destroyed) return;
 
       const video = videoRef.current;
-      const engine = selectEngine(channel);
+      const engine = selectEngine(channel, providerTitle);
       setEngineName(engine === 'hlsjs' ? 'HLS.js' : 'Shaka Pro v5');
       console.log(`[PlayerView] Using engine: ${engine} for ${channel.url}`);
 

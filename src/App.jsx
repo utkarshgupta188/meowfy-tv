@@ -156,7 +156,7 @@ function App() {
 
         {view === 'player' && selectedChannel && (
           <div className="animate-scale-in">
-            <PlayerView channel={selectedChannel} />
+            <PlayerView channel={selectedChannel} providerTitle={selectedProviderTitle} />
           </div>
         )}
       </main>
