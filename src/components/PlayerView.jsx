@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import shaka from 'shaka-player/dist/shaka-player.ui';
 import 'shaka-player/dist/controls.css';
+import * as muxjs from 'mux.js';
+
+// Required for Shaka Player to support HLS with MPEG-TS segments
+if (typeof window !== 'undefined') {
+  window.muxjs = muxjs;
+}
 
 const PROXY_BASE = 'http://localhost:3001/api/proxy';
 
@@ -126,47 +132,53 @@ export default function PlayerView({ channel }) {
           streaming: {
             bufferingGoal: 30,
             rebufferingGoal: 2,
+            ignoreTextStreamFailures: true,
+            stallThreshold: 5,
+            forceTransmux: true,
+            bufferBehind: 0,
+          },
+          manifest: {
+            hls: {
+              ignoreTextStreamFailures: true,
+              useNativeHlsOnSafari: false,
+            }
+          },
+          networking: {
             retryParameters: {
               maxAttempts: 4,
               baseDelay: 1000,
               backoffFactor: 2,
               fuzzFactor: 0.5,
             },
-          },
-          manifest: {
-            retryParameters: {
-              maxAttempts: 4,
-              baseDelay: 1000,
-              backoffFactor: 2,
-            },
-          },
+          }
         });
 
         const netEngine = player.getNetworkingEngine();
 
         if (netEngine) {
-          const originalUrls = new Map();
+          netEngine.registerRequestFilter((type, request) => {
+            // Already proxied or localhost
+            if (request.uris[0].includes('localhost')) return;
 
-          netEngine.registerRequestFilter((type, request, context) => {
-            for (let i = 0; i < request.uris.length; i++) {
-              const uri = request.uris[i];
-              if (uri.includes('localhost')) continue;
-              if (uri.startsWith('http://') || uri.startsWith('https://')) {
-                const proxyUrl = buildProxyUrl(uri, channel);
-                originalUrls.set(proxyUrl, uri);
-                request.uris[i] = proxyUrl;
-              }
+            const uri = request.uris[0];
+            if (uri.startsWith('http://') || uri.startsWith('https://')) {
+              request.uris[0] = buildProxyUrl(uri, channel);
             }
           });
 
-          netEngine.registerResponseFilter((type, response, context) => {
-            if (response.uri && originalUrls.has(response.uri)) {
-              response.uri = originalUrls.get(response.uri);
-              if (originalUrls.size > 1000) {
-                const keys = [...originalUrls.keys()];
-                for (let i = 0; i < keys.length - 100; i++) {
-                  originalUrls.delete(keys[i]);
-                }
+          netEngine.registerResponseFilter((type, response) => {
+            // Use x-final-url from proxy to fix relative path resolution
+            const finalUrl = response.headers['x-final-url'];
+            if (finalUrl) {
+              response.uri = finalUrl;
+            }
+
+            // Force manifest types if ambiguous
+            if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST) {
+              if (response.uri.includes('.m3u8')) {
+                response.headers['content-type'] = 'application/x-mpegurl';
+              } else if (response.uri.includes('.mpd')) {
+                response.headers['content-type'] = 'application/dash+xml';
               }
             }
           });
@@ -281,7 +293,7 @@ export default function PlayerView({ channel }) {
             </div>
             <div className="meta-item">
               <span className="meta-label">Playback Engine</span>
-              <span className="meta-value">Shaka Pro v5.0.9</span>
+              <span className="meta-value">Shaka Pro v5.0.10</span>
             </div>
             {channel.licenseString && (
               <div className="meta-item">

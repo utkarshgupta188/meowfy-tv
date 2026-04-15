@@ -39,9 +39,11 @@
     "cors": "^2.8.6",
     "crypto-js": "^4.2.0",
     "express": "^5.2.1",
+    "hls.js": "^1.6.16",
+    "mux.js": "^6.3.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "shaka-player": "^5.0.9"
+    "shaka-player": "^5.0.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

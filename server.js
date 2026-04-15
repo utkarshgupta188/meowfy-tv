@@ -179,10 +179,17 @@ app.all('/api/proxy', async (req, res) => {
       } catch (e) { }
     }
 
+    // Forward relevant headers from the browser
     const headers = { ...CUSTOM_HEADERS };
     if (referer) headers['Referer'] = referer;
     if (userAgent) headers['User-Agent'] = userAgent;
     if (cookie) headers['Cookie'] = cookie;
+    
+    // Pass the Range header if present in the original request
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+    }
+
     if (referer) {
       try { headers['Origin'] = new URL(referer).origin; } catch { }
     }
@@ -191,7 +198,7 @@ app.all('/api/proxy', async (req, res) => {
     }
 
     const urlShort = finalUrl.length > 120 ? finalUrl.substring(0, 120) + '...' : finalUrl;
-    console.log(`Proxy ${req.method} →`, urlShort);
+    console.log(`Proxy ${req.method} →`, urlShort, req.headers.range ? `[Range: ${req.headers.range}]` : '');
 
     const data = (req.method === 'POST' || req.method === 'PUT') ? req.body : undefined;
     delete headers['host'];
@@ -203,15 +210,32 @@ app.all('/api/proxy', async (req, res) => {
       headers,
       data,
       responseType: 'arraybuffer',
-      timeout: 30000,
+      timeout: 20000,
       maxRedirects: 10,
+      validateStatus: () => true,
     });
 
-    const contentType = response.headers['content-type'] || 'application/octet-stream';
+    // Set the response status from the target server (crucial for 206 Partial Content)
+    res.status(response.status);
+
+    let contentType = response.headers['content-type'] || 'application/octet-stream';
+    
+    // Explicitly force video/mp2t for .ts files if incorrectly served by source
+    if (finalUrl.split('?')[0].endsWith('.ts') && (contentType === 'application/octet-stream' || contentType === 'text/plain')) {
+      contentType = 'video/mp2t';
+    }
+
     res.set('Content-Type', contentType);
+    res.set('X-Content-Type-Options', 'nosniff');
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Headers', '*');
-    res.set('Access-Control-Expose-Headers', '*');
+    res.set('Access-Control-Expose-Headers', 'Content-Type, Content-Length, Content-Range, x-final-url');
+    res.set('x-final-url', finalUrl);
+
+    // Forward important headers back to the browser
+    if (response.headers['content-range']) res.set('Content-Range', response.headers['content-range']);
+    if (response.headers['accept-ranges']) res.set('Accept-Ranges', response.headers['accept-ranges']);
+    if (response.headers['content-length']) res.set('Content-Length', response.headers['content-length']);
 
     if (!contentType.includes('mpd') && !contentType.includes('m3u') && !contentType.includes('xml')) {
       res.set('Cache-Control', 'public, max-age=5');
