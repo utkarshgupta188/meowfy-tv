@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import shaka from 'shaka-player/dist/shaka-player.ui';
 import 'shaka-player/dist/controls.css';
-import * as muxjs from 'mux.js';
-
-// Required for Shaka Player to support HLS with MPEG-TS segments
-if (typeof window !== 'undefined') {
-  window.muxjs = muxjs;
-}
+import Hls from 'hls.js';
 
 const PROXY_BASE = 'http://localhost:3001/api/proxy';
 
@@ -23,22 +18,35 @@ function buildProxyUrl(originalUrl, channel) {
   return `${PROXY_BASE}?${params.toString()}`;
 }
 
+/**
+ * Determines which playback engine to use.
+ * - Hls.js: for non-DRM HLS (.m3u8) streams — much better MPEG-TS transmuxing
+ * - Shaka: for DASH (.mpd), DRM-protected, or non-HLS streams
+ */
+function selectEngine(channel) {
+  const url = (channel.url || '').toLowerCase();
+  const isHls = url.includes('.m3u8');
+  const isDrm = !!channel.isDrm;
+
+  if (isHls && !isDrm && Hls.isSupported()) {
+    return 'hlsjs';
+  }
+  return 'shaka';
+}
+
 export default function PlayerView({ channel }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const wrapperRef = useRef(null);
-  const playerRef = useRef(null);
-  const uiRef = useRef(null);
+  const playerRef = useRef(null);   // Shaka player instance
+  const hlsRef = useRef(null);      // Hls.js instance
+  const uiRef = useRef(null);       // Shaka UI overlay
   const [playerError, setPlayerError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [engineName, setEngineName] = useState('');
 
   useEffect(() => {
     shaka.polyfill.installAll();
-
-    if (!shaka.Player.isBrowserSupported()) {
-      setPlayerError('Your browser does not support Shaka Player.');
-      return;
-    }
 
     let destroyed = false;
 
@@ -46,153 +54,32 @@ export default function PlayerView({ channel }) {
       setIsLoading(true);
       setPlayerError(null);
 
+      // --- Cleanup previous instances ---
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      if (uiRef.current) {
+        await uiRef.current.destroy();
+        uiRef.current = null;
+      }
+      if (playerRef.current) {
+        await playerRef.current.destroy();
+        playerRef.current = null;
+      }
+
+      if (destroyed) return;
+
+      const video = videoRef.current;
+      const engine = selectEngine(channel);
+      setEngineName(engine === 'hlsjs' ? 'HLS.js' : 'Shaka Pro v5');
+      console.log(`[PlayerView] Using engine: ${engine} for ${channel.url}`);
+
       try {
-        if (uiRef.current) {
-          await uiRef.current.destroy();
-          uiRef.current = null;
-        }
-        if (playerRef.current) {
-          await playerRef.current.destroy();
-          playerRef.current = null;
-        }
-
-        if (destroyed) return;
-
-        const video = videoRef.current;
-        const player = new shaka.Player();
-        await player.attach(video);
-        playerRef.current = player;
-
-        const ui = new shaka.ui.Overlay(player, wrapperRef.current, video);
-        uiRef.current = ui;
-        ui.configure({
-          controlPanelElements: [
-            'play_pause',
-            'time_and_duration',
-            'spacer',
-            'mute',
-            'volume',
-            'fullscreen',
-            'overflow_menu',
-          ],
-          overflowMenuButtons: ['quality', 'playback_rate', 'captions'],
-        });
-
-        player.addEventListener('error', (event) => {
-          console.error('Shaka player error:', event.detail);
-          if (event.detail && event.detail.severity !== shaka.util.Error.Severity.CRITICAL) {
-            console.warn('Ignored non-critical Shaka error:', event.detail.code);
-            return;
-          }
-          if (!destroyed) {
-            setPlayerError(`Player Error ${event.detail.code}: ${event.detail.message || 'Unknown error'}`);
-          }
-        });
-
-        let licenseStr = channel.licenseString;
-        if (channel.isDrm && licenseStr) {
-          if (licenseStr.startsWith('http') && (licenseStr.includes('key.php') || licenseStr.includes('.json'))) {
-            try {
-              const fetchUrl = buildProxyUrl(licenseStr, channel);
-              const response = await fetch(fetchUrl);
-              const text = await response.text();
-              if (text.includes('"keys"')) {
-                licenseStr = text;
-              }
-            } catch (err) {
-              console.warn('Failed to pre-fetch clear keys:', err);
-            }
-          }
-
-          const drmConfig = parseLicenseString(licenseStr, channel);
-          console.log('DRM config:', drmConfig, 'license:', licenseStr);
-          if (drmConfig) {
-            if (drmConfig.type === 'clearkeys') {
-              player.configure({
-                drm: {
-                  clearKeys: drmConfig.clearKeys,
-                },
-              });
-            } else if (drmConfig.type === 'license_server') {
-              const proxyLicenseUrl = buildProxyUrl(drmConfig.serverUrl, channel);
-              player.configure({
-                drm: {
-                  servers: {
-                    'org.w3.clearkey': proxyLicenseUrl,
-                    'com.widevine.alpha': proxyLicenseUrl,
-                    'com.microsoft.playready': proxyLicenseUrl
-                  },
-                },
-              });
-            }
-          }
-        }
-
-        player.configure({
-          streaming: {
-            bufferingGoal: 30,
-            rebufferingGoal: 2,
-            ignoreTextStreamFailures: true,
-            stallThreshold: 5,
-            forceTransmux: true,
-            bufferBehind: 0,
-          },
-          manifest: {
-            hls: {
-              ignoreTextStreamFailures: true,
-              useNativeHlsOnSafari: false,
-            }
-          },
-          networking: {
-            retryParameters: {
-              maxAttempts: 4,
-              baseDelay: 1000,
-              backoffFactor: 2,
-              fuzzFactor: 0.5,
-            },
-          }
-        });
-
-        const netEngine = player.getNetworkingEngine();
-
-        if (netEngine) {
-          netEngine.registerRequestFilter((type, request) => {
-            // Already proxied or localhost
-            if (request.uris[0].includes('localhost')) return;
-
-            const uri = request.uris[0];
-            if (uri.startsWith('http://') || uri.startsWith('https://')) {
-              request.uris[0] = buildProxyUrl(uri, channel);
-            }
-          });
-
-          netEngine.registerResponseFilter((type, response) => {
-            // Use x-final-url from proxy to fix relative path resolution
-            const finalUrl = response.headers['x-final-url'];
-            if (finalUrl) {
-              response.uri = finalUrl;
-            }
-
-            // Force manifest types if ambiguous
-            if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST) {
-              if (response.uri.includes('.m3u8')) {
-                response.headers['content-type'] = 'application/x-mpegurl';
-              } else if (response.uri.includes('.mpd')) {
-                response.headers['content-type'] = 'application/dash+xml';
-              }
-            }
-          });
-        }
-
-        if (destroyed) return;
-
-        console.log('Loading stream:', channel.url);
-
-        await player.load(channel.url);
-
-        if (!destroyed) {
-          video.play().catch(() => { });
-          setIsLoading(false);
+        if (engine === 'hlsjs') {
+          await initHlsJs(video, channel, destroyed, setPlayerError, setIsLoading, hlsRef);
+        } else {
+          await initShaka(video, channel, destroyed, setPlayerError, setIsLoading, playerRef, uiRef, wrapperRef);
         }
       } catch (err) {
         console.error('Player init error:', err);
@@ -209,6 +96,10 @@ export default function PlayerView({ channel }) {
 
     return () => {
       destroyed = true;
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
       if (playerRef.current) {
         playerRef.current.destroy().catch(() => { });
         playerRef.current = null;
@@ -262,7 +153,9 @@ export default function PlayerView({ channel }) {
             ref={videoRef}
             autoPlay
             playsInline
+            controls
             className="video-element"
+            style={{ objectFit: 'fill', width: '100%', height: '100%' }}
           />
         </div>
       </div>
@@ -293,7 +186,7 @@ export default function PlayerView({ channel }) {
             </div>
             <div className="meta-item">
               <span className="meta-label">Playback Engine</span>
-              <span className="meta-value">Shaka Pro v5.0.10</span>
+              <span className="meta-value">{engineName}</span>
             </div>
             {channel.licenseString && (
               <div className="meta-item">
@@ -307,6 +200,215 @@ export default function PlayerView({ channel }) {
     </>
   );
 }
+
+// ─── HLS.JS ENGINE ────────────────────────────────────────────────
+async function initHlsJs(video, channel, destroyed, setPlayerError, setIsLoading, hlsRef) {
+  const proxyManifestUrl = buildProxyUrl(channel.url, channel);
+
+  const hls = new Hls({
+    maxBufferLength: 30,
+    backBufferLength: 30,
+    enableWorker: true,
+    lowLatencyMode: true,
+    xhrSetup: (xhr, url) => {
+      // Route all sub-requests through our proxy
+      if (!url.includes('localhost')) {
+        const proxied = buildProxyUrl(url, channel);
+        xhr.open('GET', proxied, true);
+      }
+    },
+  });
+
+  hlsRef.current = hls;
+
+  return new Promise((resolve, reject) => {
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      if (destroyed) return;
+      console.log('[HLS.js] Manifest parsed, starting playback');
+      video.play().catch(() => { });
+      setIsLoading(false);
+      resolve();
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      console.warn('[HLS.js] Error:', data.type, data.details, data);
+
+      if (data.fatal) {
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            console.warn('[HLS.js] Fatal network error, trying recovery...');
+            hls.startLoad();
+            break;
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            console.warn('[HLS.js] Fatal media error, trying recovery...');
+            hls.recoverMediaError();
+            break;
+          default:
+            if (!destroyed) {
+              setPlayerError(`HLS Error: ${data.details}`);
+              setIsLoading(false);
+            }
+            hls.destroy();
+            reject(new Error(data.details));
+            break;
+        }
+      }
+    });
+
+    hls.loadSource(proxyManifestUrl);
+    hls.attachMedia(video);
+  });
+}
+
+// ─── SHAKA ENGINE ─────────────────────────────────────────────────
+async function initShaka(video, channel, destroyed, setPlayerError, setIsLoading, playerRef, uiRef, wrapperRef) {
+  if (!shaka.Player.isBrowserSupported()) {
+    setPlayerError('Your browser does not support Shaka Player.');
+    return;
+  }
+
+  const player = new shaka.Player();
+  await player.attach(video);
+  playerRef.current = player;
+
+  const ui = new shaka.ui.Overlay(player, wrapperRef.current, video);
+  uiRef.current = ui;
+  ui.configure({
+    controlPanelElements: [
+      'play_pause',
+      'time_and_duration',
+      'spacer',
+      'mute',
+      'volume',
+      'fullscreen',
+      'overflow_menu',
+    ],
+    overflowMenuButtons: ['quality', 'playback_rate', 'captions'],
+  });
+
+  player.addEventListener('error', (event) => {
+    console.error('Shaka player error:', event.detail);
+    if (event.detail && event.detail.severity !== shaka.util.Error.Severity.CRITICAL) {
+      console.warn('Ignored non-critical Shaka error:', event.detail.code);
+      return;
+    }
+    if (!destroyed) {
+      setPlayerError(`Player Error ${event.detail.code}: ${event.detail.message || 'Unknown error'}`);
+    }
+  });
+
+  // DRM configuration
+  let licenseStr = channel.licenseString;
+  if (channel.isDrm && licenseStr) {
+    if (licenseStr.startsWith('http') && (licenseStr.includes('key.php') || licenseStr.includes('.json'))) {
+      try {
+        const fetchUrl = buildProxyUrl(licenseStr, channel);
+        const response = await fetch(fetchUrl);
+        const text = await response.text();
+        if (text.includes('"keys"')) {
+          licenseStr = text;
+        }
+      } catch (err) {
+        console.warn('Failed to pre-fetch clear keys:', err);
+      }
+    }
+
+    const drmConfig = parseLicenseString(licenseStr, channel);
+    console.log('DRM config:', drmConfig, 'license:', licenseStr);
+    if (drmConfig) {
+      if (drmConfig.type === 'clearkeys') {
+        player.configure({
+          drm: {
+            clearKeys: drmConfig.clearKeys,
+          },
+        });
+      } else if (drmConfig.type === 'license_server') {
+        const proxyLicenseUrl = buildProxyUrl(drmConfig.serverUrl, channel);
+        player.configure({
+          drm: {
+            servers: {
+              'org.w3.clearkey': proxyLicenseUrl,
+              'com.widevine.alpha': proxyLicenseUrl,
+              'com.microsoft.playready': proxyLicenseUrl
+            },
+          },
+        });
+      }
+    }
+  }
+
+  player.configure({
+    streaming: {
+      bufferingGoal: 30,
+      rebufferingGoal: 2,
+      ignoreTextStreamFailures: true,
+      stallThreshold: 5,
+      bufferBehind: 0,
+      retryParameters: {
+        maxAttempts: 4,
+        baseDelay: 1000,
+        backoffFactor: 2,
+        fuzzFactor: 0.5,
+      },
+    },
+    manifest: {
+      hls: {
+        ignoreTextStreamFailures: true,
+        sequenceMode: true,
+        ignoreManifestTimestampsInSegmentsMode: true,
+      },
+      retryParameters: {
+        maxAttempts: 4,
+        baseDelay: 1000,
+        backoffFactor: 2,
+        fuzzFactor: 0.5,
+      },
+    },
+    mediaSource: {
+      forceTransmux: true,
+    },
+  });
+
+  const netEngine = player.getNetworkingEngine();
+
+  if (netEngine) {
+    netEngine.registerRequestFilter((type, request) => {
+      if (request.uris[0].includes('localhost')) return;
+
+      const uri = request.uris[0];
+      if (uri.startsWith('http://') || uri.startsWith('https://')) {
+        request.uris[0] = buildProxyUrl(uri, channel);
+      }
+    });
+
+    netEngine.registerResponseFilter((type, response) => {
+      const finalUrl = response.headers['x-final-url'];
+      if (finalUrl) {
+        response.uri = finalUrl;
+      }
+
+      if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST) {
+        if (response.uri.includes('.m3u8')) {
+          response.headers['content-type'] = 'application/x-mpegurl';
+        } else if (response.uri.includes('.mpd')) {
+          response.headers['content-type'] = 'application/dash+xml';
+        }
+      }
+    });
+  }
+
+  if (destroyed) return;
+
+  console.log('Loading stream via Shaka:', channel.url);
+  await player.load(channel.url);
+
+  if (!destroyed) {
+    video.play().catch(() => { });
+    setIsLoading(false);
+  }
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────
 
 function base64UrlToHex(base64Url) {
   let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');

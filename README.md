@@ -1,9 +1,9 @@
-# 🚀 MeowfyTV Web Premium v3.2.0
+# 🚀 MeowfyTV Web Premium v3.3.0
 
 A high-fidelity, cinematic web interface for live TV streaming, meticulously crafted for a premium user experience and seamless cross-platform performance.
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Version-3.2.0-blueviolet?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-3.3.0-blueviolet?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/UI-Cinematic_Glass-blue?style=for-the-badge" alt="UI Theme">
   <img src="https://img.shields.io/badge/Stack-Vite_%2B_React_%2B_Express-green?style=for-the-badge" alt="Tech Stack">
   <img src="https://img.shields.io/badge/Platform-Windows_%2B_Web-orange?style=for-the-badge" alt="Platform">
@@ -34,7 +34,7 @@ Every component is built using our custom **Glassmorphism 2.0** engine:
 You can now download the standalone desktop version of MeowfyTV for the best experience:
 
 1. Go to the [**GitHub Releases**](https://github.com/utkarshgupta188/meowfy-tv/releases) page.
-2. Download the `MeowfyTV-Setup-3.2.0.exe` installer.
+2. Download the `MeowfyTV-Setup-3.3.0.exe` installer.
 3. Install and enjoy live TV with zero browser clutter.
 
 ---
