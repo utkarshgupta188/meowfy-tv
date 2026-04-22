@@ -35,8 +35,8 @@ function App() {
 
   useEffect(() => {
     fetchProviders();
-    const platform = /Android/i.test(navigator.userAgent) ? 'android' : 
-                    (/Electron/i.test(navigator.userAgent) ? 'electron' : 'web');
+    const platform = /Android/i.test(navigator.userAgent) ? 'android' :
+      (/Electron/i.test(navigator.userAgent) ? 'electron' : 'web');
     trackEvent('app_open', { platform });
   }, []);
 
@@ -112,9 +112,9 @@ function App() {
   function handleChannelClick(channel) {
     setSelectedChannel(channel);
     setView('player');
-    trackEvent('channel_select', { 
+    trackEvent('channel_select', {
       channel_name: channel.title,
-      provider_name: selectedProviderTitle 
+      provider_name: selectedProviderTitle
     });
   }
 
@@ -144,7 +144,7 @@ function App() {
     <div className="app-container">
       <aside className="app-sidebar">
         <div className="sidebar-top">
-          <div 
+          <div
             className={`sidebar-item ${view === 'providers' ? 'active' : ''}`}
             onClick={() => setView('providers')}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setView('providers'); }}
@@ -158,7 +158,7 @@ function App() {
             </svg>
             <span className="sidebar-label"></span>
           </div>
-          <div 
+          <div
             className={`sidebar-item ${view === 'saved' ? 'active' : ''}`}
             onClick={() => setView('saved')}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setView('saved'); }}
@@ -176,162 +176,162 @@ function App() {
 
       <div className="app-content">
         <div className="app">
-      <div className="aurora-bg">
-        <div className="aurora-blob blob-1"></div>
-        <div className="aurora-blob blob-2"></div>
-        <div className="aurora-blob blob-3"></div>
-      </div>
-
-      <header className="app-header">
-        <div className="header-left">
-          {view !== 'providers' && view !== 'saved' && (
-            <button className="back-btn" onClick={handleBack} aria-label="Go back">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
-          <div 
-            className="logo animate-fade-in" 
-            onClick={() => { setView('providers'); setSelectedChannel(null); setChannels([]); }}
-            tabIndex="0"
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setView('providers'); setSelectedChannel(null); setChannels([]); }}}
-            role="button"
-            aria-label="Home"
-            style={{ cursor: 'pointer' }}
-          >
-            <span className="logo-icon">🐱</span>
-            <h1 className="premium-font">MEOWFY<span style={{ color: 'var(--accent)', marginLeft: '2px' }}>TV</span></h1>
+          <div className="aurora-bg">
+            <div className="aurora-blob blob-1"></div>
+            <div className="aurora-blob blob-2"></div>
+            <div className="aurora-blob blob-3"></div>
           </div>
-        </div>
-        <div className="header-right">
-        </div>
-      </header>
 
-      <main className="app-main">
-        {error && (
-          <div className="error-banner animate-fade-in">
-            <span>⚠️</span>
-            <p>{error}</p>
-            <button className="btn-primary" onClick={() => { setError(null); fetchProviders(); }}>Retry</button>
-          </div>
-        )}
+          <header className="app-header">
+            <div className="header-left">
+              {view !== 'providers' && view !== 'saved' && (
+                <button className="back-btn" onClick={handleBack} aria-label="Go back">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+              <div
+                className="logo animate-fade-in"
+                onClick={() => { setView('providers'); setSelectedChannel(null); setChannels([]); }}
+                tabIndex="0"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setView('providers'); setSelectedChannel(null); setChannels([]); } }}
+                role="button"
+                aria-label="Home"
+                style={{ cursor: 'pointer' }}
+              >
+                <span className="logo-icon">🐱</span>
+                <h1 className="premium-font">MEOWFY<span style={{ color: 'var(--accent)', marginLeft: '2px' }}>TV</span></h1>
+              </div>
+            </div>
+            <div className="header-right">
+            </div>
+          </header>
 
-        {loading && view === 'providers' && (
-          <div className="animate-fade-in">
-            <h2 className="section-title">Providers</h2>
-            <Skeleton type="card" count={8} />
-          </div>
-        )}
-
-        {loading && view === 'channels' && (
-          <div className="animate-fade-in">
-            <h2 className="section-title">{selectedProviderTitle} Channels</h2>
-            <Skeleton type="row" count={10} />
-          </div>
-        )}
-
-        {!loading && (
-          <div className="view-transition-container">
-            {view === 'providers' && (
-              <div className="animate-scale-in">
-                <ProviderList providers={providers} onSelect={handleProviderClick} />
+          <main className="app-main">
+            {error && (
+              <div className="error-banner animate-fade-in">
+                <span>⚠️</span>
+                <p>{error}</p>
+                <button className="btn-primary" onClick={() => { setError(null); fetchProviders(); }}>Retry</button>
               </div>
             )}
-            {view === 'channels' && (
-              <div className="animate-scale-in">
-                <ChannelList
-                  channels={channels}
-                  providerTitle={selectedProviderTitle}
-                  onSelect={handleChannelClick}
-                  filter={channelFilter}
-                  setFilter={setChannelFilter}
-                  groupFilter={channelGroup}
-                  setGroupFilter={setChannelGroup}
-                  favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
-                />
+
+            {loading && view === 'providers' && (
+              <div className="animate-fade-in">
+                <h2 className="section-title">Providers</h2>
+                <Skeleton type="card" count={8} />
               </div>
             )}
-            {view === 'saved' && (
-              <div className="animate-scale-in">
-                {favorites.length === 0 ? (
-                  <div className="empty-favorites animate-fade-in">
-                    <div className="empty-icon">❤️</div>
-                    <h3>No Saved Channels</h3>
-                    <p>Channels you heart will appear here for quick access.</p>
-                    <button className="btn-primary" onClick={() => setView('providers')}>Explore Channels</button>
+
+            {loading && view === 'channels' && (
+              <div className="animate-fade-in">
+                <h2 className="section-title">{selectedProviderTitle} Channels</h2>
+                <Skeleton type="row" count={10} />
+              </div>
+            )}
+
+            {!loading && (
+              <div className="view-transition-container">
+                {view === 'providers' && (
+                  <div className="animate-scale-in">
+                    <ProviderList providers={providers} onSelect={handleProviderClick} />
                   </div>
-                ) : (
-                  <ChannelList
-                    channels={favorites}
-                    providerTitle="My Saved"
-                    onSelect={handleChannelClick}
-                    filter={channelFilter}
-                    setFilter={setChannelFilter}
-                    groupFilter={channelGroup}
-                    setGroupFilter={setChannelGroup}
-                    favorites={favorites}
-                    onToggleFavorite={toggleFavorite}
-                  />
+                )}
+                {view === 'channels' && (
+                  <div className="animate-scale-in">
+                    <ChannelList
+                      channels={channels}
+                      providerTitle={selectedProviderTitle}
+                      onSelect={handleChannelClick}
+                      filter={channelFilter}
+                      setFilter={setChannelFilter}
+                      groupFilter={channelGroup}
+                      setGroupFilter={setChannelGroup}
+                      favorites={favorites}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  </div>
+                )}
+                {view === 'saved' && (
+                  <div className="animate-scale-in">
+                    {favorites.length === 0 ? (
+                      <div className="empty-favorites animate-fade-in">
+                        <div className="empty-icon">❤️</div>
+                        <h3>No Saved Channels</h3>
+                        <p>Channels you heart will appear here for quick access.</p>
+                        <button className="btn-primary" onClick={() => setView('providers')}>Explore Channels</button>
+                      </div>
+                    ) : (
+                      <ChannelList
+                        channels={favorites}
+                        providerTitle="My Saved"
+                        onSelect={handleChannelClick}
+                        filter={channelFilter}
+                        setFilter={setChannelFilter}
+                        groupFilter={channelGroup}
+                        setGroupFilter={setChannelGroup}
+                        favorites={favorites}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    )}
+                  </div>
+                )}
+                {view === 'settings' && (
+                  <div className="settings-view animate-scale-in">
+                    <h2 className="section-title">Settings</h2>
+                    <div className="settings-grid">
+                      <div className="settings-card glass-premium">
+                        <div className="settings-info">
+                          <h3>App Version</h3>
+                          <p>v3.4.0 Master Edition</p>
+                        </div>
+                        <span className="mini-badge live">LATEST</span>
+                      </div>
+                      <div className="settings-card glass-premium">
+                        <div className="settings-info">
+                          <h3>Theme Mode</h3>
+                          <p>Deep Obsidian (Premium)</p>
+                        </div>
+                        <div className="theme-toggle-dummy">
+                          <div className="toggle-bg active"><div className="toggle-knob"></div></div>
+                        </div>
+                      </div>
+                      <div className="settings-card glass-premium">
+                        <div className="settings-info">
+                          <h3>Hardware Acceleration</h3>
+                          <p>Optimized for FireTV & WebGL</p>
+                        </div>
+                        <div className="theme-toggle-dummy">
+                          <div className="toggle-bg active"><div className="toggle-knob"></div></div>
+                        </div>
+                      </div>
+                      <div className="settings-card glass-premium clickable" onClick={() => setFavorites([])}>
+                        <div className="settings-info">
+                          <h3>Clear Favorites</h3>
+                          <p>Remove all saved channels</p>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
-            {view === 'settings' && (
-              <div className="settings-view animate-scale-in">
-                <h2 className="section-title">Settings</h2>
-                <div className="settings-grid">
-                  <div className="settings-card glass-premium">
-                    <div className="settings-info">
-                      <h3>App Version</h3>
-                      <p>v3.3.0 Professional Edition</p>
-                    </div>
-                    <span className="mini-badge live">LATEST</span>
-                  </div>
-                  <div className="settings-card glass-premium">
-                    <div className="settings-info">
-                      <h3>Theme Mode</h3>
-                      <p>Deep Obsidian (Premium)</p>
-                    </div>
-                    <div className="theme-toggle-dummy">
-                      <div className="toggle-bg active"><div className="toggle-knob"></div></div>
-                    </div>
-                  </div>
-                  <div className="settings-card glass-premium">
-                    <div className="settings-info">
-                      <h3>Hardware Acceleration</h3>
-                      <p>Optimized for FireTV & WebGL</p>
-                    </div>
-                    <div className="theme-toggle-dummy">
-                      <div className="toggle-bg active"><div className="toggle-knob"></div></div>
-                    </div>
-                  </div>
-                  <div className="settings-card glass-premium clickable" onClick={() => setFavorites([])}>
-                    <div className="settings-info">
-                      <h3>Clear Favorites</h3>
-                      <p>Remove all saved channels</p>
-                    </div>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
-                  </div>
-                </div>
+
+            {view === 'player' && selectedChannel && (
+              <div className="animate-scale-in">
+                <PlayerView channel={selectedChannel} providerTitle={selectedProviderTitle} />
               </div>
             )}
-          </div>
-        )}
+          </main>
 
-        {view === 'player' && selectedChannel && (
-          <div className="animate-scale-in">
-            <PlayerView channel={selectedChannel} providerTitle={selectedProviderTitle} />
-          </div>
-        )}
-      </main>
-
-      <footer style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', zIndex: 10, position: 'relative' }}>
-        <p>Premium High-Fidelity IPTV Experience</p>
-        <p style={{ marginTop: '8px' }}>
-          v3.3.0 • Made by Utkarsh Gupta • <a href="https://github.com/utkarshgupta188" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '600' }}>@utkarshgupta188</a>
-        </p>
-      </footer>
+          <footer style={{ textAlign: 'center', padding: '3rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', zIndex: 10, position: 'relative' }}>
+            <p>Premium High-Fidelity IPTV Experience</p>
+            <p style={{ marginTop: '8px' }}>
+              v3.4.0 • Made by Utkarsh Gupta • <a href="https://github.com/utkarshgupta188" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: '600' }}>@utkarshgupta188</a>
+            </p>
+          </footer>
         </div>
       </div>
     </div>
