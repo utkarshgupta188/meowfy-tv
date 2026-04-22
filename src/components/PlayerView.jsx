@@ -67,21 +67,21 @@ export default function PlayerView({ channel, providerTitle }) {
         e.preventDefault();
         const video = videoRef.current;
         if (video) {
-          if (video.paused) video.play().catch(() => {});
+          if (video.paused) video.play().catch(() => { });
           else video.pause();
         }
-      } 
+      }
       // Toggle Fullscreen using 'F' key
       else if (key === 'f') {
         e.preventDefault();
         if (!document.fullscreenElement) {
           const wrapper = wrapperRef.current;
           if (wrapper) {
-            if (wrapper.requestFullscreen) wrapper.requestFullscreen().catch(() => {});
+            if (wrapper.requestFullscreen) wrapper.requestFullscreen().catch(() => { });
             else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
           }
         } else {
-          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => { });
           else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
         }
       }
@@ -207,7 +207,7 @@ export default function PlayerView({ channel, providerTitle }) {
       </div>
 
       <div className="player-details-section">
-        <div className="details-card glass-premium">
+        <div className="details-card glass-premium" style={{ display: 'none' }}>
           <div className="card-header">
             <h4 className="premium-font">Stream Intelligence</h4>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

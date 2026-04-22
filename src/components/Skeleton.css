@@ -113,8 +113,39 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% { background-position: -468px 0; }
+  100% { background-position: 468px 0; }
+}
+
+.empty-favorites {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: var(--bg-card);
+  border-radius: var(--radius-2xl);
+  border: 2px dashed var(--border);
+  margin-top: 2rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 0 20px rgba(244, 63, 94, 0.3));
+}
+
+.empty-favorites h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-favorites p {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  max-width: 300px;
 }
 
 @media (max-width: 1023px) {
@@ -141,5 +172,6 @@
 @media (max-width: 480px) {
   .skeleton-grid-cards {
     grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
   }
 }

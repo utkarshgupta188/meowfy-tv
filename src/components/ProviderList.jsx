@@ -10,6 +10,15 @@ export default function ProviderList({ providers, onSelect }) {
               key={i}
               className="provider-card glass-premium animate-fade-in"
               onClick={() => onSelect(provider)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect(provider);
+                }
+              }}
+              tabIndex="0"
+              role="button"
+              aria-label={`Select ${provider.title}`}
               style={{ animationDelay: `${i * 0.08}s` }}
             >
               <div className="card-badge">Provider</div>
@@ -26,8 +35,8 @@ export default function ProviderList({ providers, onSelect }) {
               <div className="card-content">
                 <h3>{provider.title || 'Unknown Provider'}</h3>
                 <div className="card-footer">
-                  <span className="channel-count">Live Content</span>
-                  <span className="action-hint">Explore →</span>
+                  <span className="channel-count"></span>
+                  <span className="action-hint"></span>
                 </div>
               </div>
             </div>

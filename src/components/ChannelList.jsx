@@ -10,9 +10,12 @@ export default function ChannelList({
   filter,
   setFilter,
   groupFilter,
-  setGroupFilter
+  setGroupFilter,
+  favorites = [],
+  onToggleFavorite
 }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH);
+  const [isGroupsExpanded, setIsGroupsExpanded] = useState(false);
   const observerTarget = useRef(null);
 
   const groups = useMemo(() => {
@@ -73,13 +76,39 @@ export default function ChannelList({
         </div>
       </div>
 
-      <div className="genre-ribbon-container animate-fade-in">
+      <div className={`genre-ribbon-container animate-fade-in ${isGroupsExpanded ? 'is-expanded' : ''}`}>
         <div className="genre-ribbon">
+          <button 
+            className={`genre-tab expansion-toggle glass-premium ${isGroupsExpanded ? 'active' : ''}`}
+            onClick={() => setIsGroupsExpanded(!isGroupsExpanded)}
+            title="Browse all categories"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              {isGroupsExpanded ? (
+                <>
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </>
+              ) : (
+                <>
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </>
+              )}
+            </svg>
+            <span>{isGroupsExpanded ? 'Close' : 'Filter'}</span>
+          </button>
+
           {groups.map((g, idx) => (
             <button
               key={g}
               className={`genre-tab glass-premium ${groupFilter === g ? 'active' : ''}`}
-              onClick={() => setGroupFilter(g)}
+              onClick={() => {
+                setGroupFilter(g);
+                if (isGroupsExpanded) setIsGroupsExpanded(false);
+              }}
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
               {g === 'all' ? 'All Channels' : g}
@@ -94,13 +123,38 @@ export default function ChannelList({
             key={`${ch.title}-${i}`}
             className={`channel-card glass-premium animate-fade-in ${ch.isDrm ? 'drm-exclusive' : ''}`}
             onClick={() => onSelect(ch)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelect(ch);
+              }
+            }}
+            tabIndex="0"
+            role="button"
+            aria-label={`Watch ${ch.title}`}
             style={{ 
               animationDelay: i < 50 ? `${i * 0.04}s` : '0s' 
             }}
           >
             <div className="card-status-bar">
-              {ch.isDrm && <span className="mini-badge drm">DRM</span>}
-              <span className="mini-badge live">LIVE</span>
+              <button 
+                className={`favorite-btn ${favorites.some(f => f.title === ch.title) ? 'is-favorite' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite(ch);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    onToggleFavorite(ch);
+                  }
+                }}
+                aria-label="Toggle Favorite"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill={favorites.some(f => f.title === ch.title) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </button>
             </div>
 
             <div className="logo-container-large">
