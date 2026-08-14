@@ -2,7 +2,7 @@
 
 If you find this project useful, consider supporting development and future improvements.
 
-[![Support me](https://img.shields.io/badge/Support%20me-Bondin-blue?style=for-the-badge)](https://bondin.io/utkarshgupta)
+[![Buy Me a Chai](https://img.shields.io/badge/☕%20Buy%20Me%20a%20Chai-yellow?style=for-the-badge)](https://www.buymeacoffee.com/utkarshgupta18)
 
 
 MIT License
