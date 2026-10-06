@@ -1,7 +1,5 @@
-NO LONGER WORKING !! 
-
 ## Support My Work
-
+I'm dont own I only manages it here.
 If you find this project useful, consider supporting development and future improvements.
 
 [![Buy Me a Chai](https://img.shields.io/badge/☕%20Buy%20Me%20a%20Chai-yellow?style=for-the-badge)](https://bondin.io/utkarshgupta)
